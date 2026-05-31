@@ -10,6 +10,9 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+
+	"pricetracker/api/internal/repository"
+	"pricetracker/api/internal/service"
 )
 
 type TrackRequest struct {
@@ -21,15 +24,10 @@ type TrackResponse struct {
 	Status string `json:"status"`
 }
 
-type Task struct {
-	Id  int `json:"id"`
-	Url string `json:"url"`
-}
-
 func main() {
 	dsn := os.Getenv("DB_DSN")
 	if dsn == "" {
-		dsn= "postgres://admin:qwerty@localhost:5432/pricetracker"
+		dsn = "postgres://admin:qwerty@localhost:5432/pricetracker"
 	}
 
 	db, err := sql.Open("pgx", dsn)
@@ -69,13 +67,18 @@ func main() {
 		false,
 		nil,
 	)
+
 	if err != nil {
 		log.Fatalf("Не удалось объявить очередь: %v", err)
 	}
 
 	log.Printf("Очередь объявлена! Имя: %s, Сообщений: %d", q.Name, q.Messages)
 
+	itemRepo := repository.NewItemRepository(db)
+	itemService := service.NewItemService(itemRepo, ch)
+
 	http.HandleFunc("/track", func(w http.ResponseWriter, r *http.Request) {
+
 		if r.Method != http.MethodPost {
 			http.Error(w, "Метод не разрешён", http.StatusMethodNotAllowed)
 			return
@@ -86,52 +89,22 @@ func main() {
 			http.Error(w, "Некорректный JSON", http.StatusBadRequest)
 			return
 		}
-
-		var id int
-		query := (`INSERT INTO items (url) VALUES ($1) RETURNING id`)
-		if err := db.QueryRow(query, req.Url).Scan(&id); err != nil {
-			http.Error(w, "Ошибка", http.StatusInternalServerError)
-			return
-		}
-
-		t := Task{
-			Id:  id,
-			Url: req.Url,
-		}
-
-		bodyBytes, err := json.Marshal(t)
+		 
+		id, err := itemService.ProcessItem(r.Context(), req.Url)
 		if err != nil {
-			http.Error(w, "Не удалось преобразовать структуру", http.StatusInternalServerError)
+			http.Error(w, "Ошибка сервера!", http.StatusInternalServerError)
 			return
 		}
 
-		err = ch.PublishWithContext(
-			r.Context(),
-			"",
-			"parsing_tasks",
-			false,
-			false,
-			amqp.Publishing{
-				ContentType: "application/json",
-				Body:        bodyBytes,
-			})
-		if err != nil {
-			http.Error(w, "Ошибка публикации", http.StatusInternalServerError)
-			return
-		}
-
-		log.Println("Сообщение отправлено!")
-
-		res := TrackResponse{
-			Id:     id,
+		res := TrackResponse {
+			Id: id,
 			Status: "Сохранено!",
 		}
-
+	
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, "Ошибка кодирования JSON", http.StatusInternalServerError)
+			http.Error(w, "Ошибка кодирования Json", http.StatusInternalServerError)
 		}
-
 	})
 
 	log.Println("сервер запущен на http://localhost:8080")
