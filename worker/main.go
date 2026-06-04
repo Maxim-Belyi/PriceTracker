@@ -76,7 +76,7 @@ func main() {
 		nil,
 	)
 	if err != nil {
-		log.Fatalf("Ошбибка регистрации консумера: %v", err)
+		log.Fatalf("Ошибка регистрации консумера: %v", err)
 	}
 
 	forever := make(chan struct{})
