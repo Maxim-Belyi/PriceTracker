@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"pricetracker/worker/internal/parser"
 	"pricetracker/worker/internal/repository"
 )
 
@@ -40,9 +41,14 @@ func (s *ItemService) ProcessTask(messageBody []byte) error {
 		log.Printf("Страница скачана! Статус: %d", resp.StatusCode)
 		defer resp.Body.Close()
 
-	price := 991.02
-
-	err = s.repo.UpdatePrice(price, t.Id)
+	p := parser.NewCitilinkParser()
+	
+	parsedItem, err := p.Parse(t.Url)
+	if err != nil {
+		log.Printf("Ошибка парсинга: %v", err)
+	}
+	
+	err = s.repo.UpdateItemData(t.Id, parsedItem.Title, parsedItem.ImageUrl, parsedItem.Price)
 	if err != nil {
 		log.Printf("Ошибка обновления БД: %v", err)
 		return err
