@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"pricetracker/worker/internal/repository"
 	"pricetracker/worker/internal/service"
@@ -77,8 +79,8 @@ func main() {
 		log.Fatalf("Ошибка регистрации консумера: %v", err)
 	}
 
-	forever := make(chan struct{})
-
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		for msg := range msgs {
 			log.Printf("Получено сообщение: %s", msg.Body)
@@ -86,10 +88,12 @@ func main() {
 				log.Printf("Ошибка декодирования Json: %v", err)
 				msg.Nack(false, true)
 				continue
-			}			
+			}
 			msg.Ack(false)
 		}
 	}()
 	log.Println("Worker запущен! Ожидание сообщений...")
-	<-forever
+
+	<-sigs
+	log.Println("Получаем сигнал завершения, воркер выключается")
 }
