@@ -16,6 +16,7 @@
 <img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=flat&logo=rabbitmq&logoColor=white" alt="RabbitMQ"/>
 <img src="https://img.shields.io/badge/PostgreSQL-336791?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL"/> 
 <img src="https://img.shields.io/badge/pgx-blue?style=flat&logo=go&logoColor=white" alt="pgx"/> 
+<img src="https://img.shields.io/badge/goquery-007D9C?style=flat&logo=go&logoColor=white" alt="goquery"/>
 <img src="https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker"/> 
 </div>
 
@@ -37,9 +38,9 @@
 
 2.  **Установите зависимости:**
     ```sh
-    go mod tidy
     cd api && go mod tidy
     cd ../worker && go mod tidy
+    cd ..
     ```
 3.  **Поднимите инфраструктуру (PostgreSQL + RabbitMQ):**
     Для запуска базы данных и брокера сообщений используется Docker Compose.
@@ -52,39 +53,48 @@
     Подключитесь к `localhost:5432` (пользователь `admin`, пароль `qwerty`, БД `pricetracker`) и выполните SQL скрипт:
     ```sql
     CREATE TABLE IF NOT EXISTS items (
-        id SERIAL PRIMARY KEY,
-        url TEXT NOT NULL,
-        current_price NUMERIC(10, 2) DEFAULT 0.00,
-        status VARCHAR(50) NOT NULL DEFAULT 'pending',
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,
+    url TEXT NOT NULL,
+    title VARCHAR(255),
+    image_url TEXT,
+    current_price NUMERIC(10, 2) DEFAULT 0.00,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
+    ```
+    ```sql
+    CREATE TABLE IF NOT EXISTS price_history (
+    id SERIAL PRIMARY KEY,
+    item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    price NUMERIC(10, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     ```
 
 5.  **Запустите микросервисы (в разных терминалах):**
     
-    Сначала запускаем фоновый слушатель:
+    Фоновый слушатель:
     ```sh
     go run ./worker/main.go
     ```
-    Затем запускаем публичный API (порт 8080):
+    Публичный API (порт 8080):
     ```sh
     go run ./api/main.go
     ```
 
 ## 📝 Как управлять парсингом (REST API)
 
-*   **Добавление товара в очередь:** 
-    Отправьте POST запрос с URL товара. API сохранит его со статусом `pending`, положит в RabbitMQ и мгновенно вернет ID. Воркер на фоне обработает ссылку.
+* **Добавление товара в очередь:** Отправьте POST запрос с URL товара, API сохранит его со статусом `pending`, положит в RabbitMQ и вернет ID
     ```bash
     curl -X POST http://localhost:8080/track \
     -H "Content-Type: application/json" \
-    -d '{"url": "https://mvideo.ru/iphone-15"}'
+    -d '{"url": "[https://www.citilink.ru/catalog/smartfony/](https://www.citilink.ru/catalog/smartfony/)"}'
     ```
 
 ## 🌐 Публикация и архитектура
 
-В проекте предусмотрен `docker-compose.yml` для полной оркестрации. Помимо инфраструктуры, можно собрать Docker-образы для самих Go-сервисов (API и Worker), чтобы разворачивать проект одной кнопкой.
+В проекте предусмотрен `docker-compose.yml` для полной оркестрации, помимо инфраструктуры, можно собрать Docker-образы для самих Go-сервисов (API и Worker), чтобы разворачивать проект одной кнопкой.
+Для извлечения данных из HTML используется библиотека `goquery`. Логика парсинга вынесена в отдельный слой (паттерн Адаптер), что позволяет легко добавлять новые правила скрапинга для других интернет-магазинов, не меняя основную бизнес-логику воркера.
 
 ---
 
