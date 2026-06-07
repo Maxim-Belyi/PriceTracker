@@ -3,9 +3,8 @@ package service
 import (
 	"encoding/json"
 	"log"
-	"math/rand/v2"
+	"net/http"
 	"pricetracker/worker/internal/repository"
-	"time"
 )
 
 type ItemService struct {
@@ -32,10 +31,19 @@ func (s *ItemService) ProcessTask(messageBody []byte) error {
 		return err
 	}
 	log.Printf("Начинаю парсинг для URL: %v", t.Url)
-	time.Sleep(2 *time.Second)
-	price := float64(rand.IntN(1000)) + 100
 
-	err := s.repo.UpdatePrice(price, t.Id); if err != nil {
+		resp, err := http.Get(t.Url)
+		if err != nil{
+			log.Printf("Ошибка скачивания страницы: %v", err)
+			return err
+		}
+		log.Printf("Страница скачана! Статус: %d", resp.StatusCode)
+		defer resp.Body.Close()
+
+	price := 991.02
+
+	err = s.repo.UpdatePrice(price, t.Id)
+	if err != nil {
 		log.Printf("Ошибка обновления БД: %v", err)
 		return err
 	}
