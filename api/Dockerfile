@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o api_app main.go
+RUN go build -o api_app cmd/main.go
 
 FROM alpine:latest
 
