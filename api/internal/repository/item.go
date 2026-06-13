@@ -10,6 +10,44 @@ type ItemRepository struct {
 	db *sql.DB
 }
 
+type Item struct {
+	ID           int     `json:"id"`
+	Title        *string `json:"title"`
+	ImageUrl     *string `json:"image_url"`
+	CurrentPrice float64 `json:"current_price"`
+	Status       string  `json:"status"`
+}
+
+
+func (r *ItemRepository) GetAllItems() ([]Item, error) {
+    query := `SELECT id, title, image_url, current_price, status
+              FROM items
+              ORDER BY updated_at DESC`
+     
+    rows, err := r.db.Query(query)
+    if err != nil {
+        return nil, err 
+    }
+    defer rows.Close() 
+
+    var items []Item 
+
+    for rows.Next() {
+        var i Item
+        err := rows.Scan(&i.ID, &i.Title, &i.ImageUrl, &i.CurrentPrice, &i.Status)
+        if err != nil {
+            return nil, err 
+        }
+        items = append(items, i)
+    }
+
+    if err = rows.Err(); err != nil {
+        return nil, err
+    }
+    
+    return items, nil
+}
+
 func NewItemRepository(db *sql.DB) *ItemRepository {
 	return &ItemRepository{
 		db: db,
@@ -24,5 +62,4 @@ func (r *ItemRepository) Create(url string) (int, error) {
 	}
 
 	return id, nil
-
 }
