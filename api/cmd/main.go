@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -13,16 +12,8 @@ import (
 
 	"pricetracker/api/internal/repository"
 	"pricetracker/api/internal/service"
+	"pricetracker/api/internal/handler"
 )
-
-type TrackRequest struct {
-	Url string `json:"url"`
-}
-
-type TrackResponse struct {
-	Id     int    `json:"id"`
-	Status string `json:"status"`
-}
 
 func main() {
 	dsn := os.Getenv("DB_DSN")
@@ -77,35 +68,9 @@ func main() {
 	itemRepo := repository.NewItemRepository(db)
 	itemService := service.NewItemService(itemRepo, ch)
 
-	http.HandleFunc("/track", func(w http.ResponseWriter, r *http.Request) {
-
-		if r.Method != http.MethodPost {
-			http.Error(w, "Метод не разрешён", http.StatusMethodNotAllowed)
-			return
-		}
-
-		var req TrackRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Некорректный JSON", http.StatusBadRequest)
-			return
-		}
-		 
-		id, err := itemService.ProcessItem(r.Context(), req.Url)
-		if err != nil {
-			http.Error(w, "Ошибка сервера!", http.StatusInternalServerError)
-			return
-		}
-
-		res := TrackResponse {
-			Id: id,
-			Status: "Сохранено!",
-		}
-	
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, "Ошибка кодирования Json", http.StatusInternalServerError)
-		}
-	})
+	itemHandler := handler.NewItemHandler(itemService)
+	http.HandleFunc("/items", itemHandler.GetAll)
+	http.HandleFunc("/track", itemHandler.Track)
 
 	log.Println("сервер запущен на http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
