@@ -25,14 +25,14 @@
 Чтобы развернуть проект у себя, выполните следующие шаги:
 
 ### Необходимые компоненты
-*   [Go](https://golang.org/dl/) (версия 1.22+)
-*   [Docker и Docker Compose](https://www.docker.com/) (для запуска инфраструктуры БД и RabbitMQ)
+* [Go](https://golang.org/dl/) (версия 1.22+)
+* [Docker и Docker Compose](https://www.docker.com/) (для запуска инфраструктуры БД и RabbitMQ)
 
 ### Установка и запуск
 
 1.  **Клонируйте репозиторий:**
     ```sh
-    git clone https://github.com/Maxim-Belyi/PriceTracker.git
+    git clone [https://github.com/Maxim-Belyi/PriceTracker.git](https://github.com/Maxim-Belyi/PriceTracker.git)
     cd PriceTracker
     ```
 
@@ -42,36 +42,15 @@
     cd ../worker && go mod tidy
     cd ..
     ```
+
 3.  **Поднимите инфраструктуру (PostgreSQL + RabbitMQ):**
-    Для запуска базы данных и брокера сообщений используется Docker Compose.
+    Для запуска базы данных и брокера сообщений используется Docker Compose. С помощью скрипта `init_db/init.sql` все необходимые таблицы (`items` и `price_history`) создадутся автоматически при первом запуске.
     ```sh
-    docker-compose up -d postgres rabbitmq
+    docker compose up -d postgres rabbitmq
     ```
-    *Web-панель RabbitMQ будет доступна по адресу `http://localhost:15672` (guest/guest).*
+    *Панель RabbitMQ будет доступна по адресу `http://localhost:15672` (guest/guest).*
 
-4.  **Создайте таблицу в БД:**
-    Подключитесь к `localhost:5432` (пользователь `admin`, пароль `qwerty`, БД `pricetracker`) и выполните SQL скрипт:
-    ```sql
-    CREATE TABLE IF NOT EXISTS items (
-    id SERIAL PRIMARY KEY,
-    url TEXT NOT NULL,
-    title VARCHAR(255),
-    image_url TEXT,
-    current_price NUMERIC(10, 2) DEFAULT 0.00,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP);
-    ```
-    ```sql
-    CREATE TABLE IF NOT EXISTS price_history (
-    id SERIAL PRIMARY KEY,
-    item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-    price NUMERIC(10, 2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    ```
-
-5.  **Запустите микросервисы (в разных терминалах):**
+4.  **Запустите микросервисы (в разных терминалах):**
     
     Фоновый слушатель:
     ```sh
@@ -93,9 +72,9 @@
 
 ## 🌐 Публикация и архитектура
 
-В проекте предусмотрен `docker-compose.yml` для полной оркестрации, помимо инфраструктуры, можно собрать Docker-образы для самих Go-сервисов (API и Worker), чтобы разворачивать проект одной кнопкой.
+В проекте предусмотрен `docker-compose.yml` для полной оркестрации, помимо инфраструктуры, можно собрать Docker-образы для самих Go-сервисов (API и Worker), чтобы разворачивать проект одной командой
 Для извлечения данных из HTML используется библиотека `goquery`. Логика парсинга вынесена в отдельный слой (паттерн Адаптер), что позволяет легко добавлять новые правила скрапинга для других интернет-магазинов, не меняя основную бизнес-логику воркера.
 
 ---
 
-**Примечание:** Это учебный проект. Логика парсинга HTML-страниц заменена заглушкой (генератором случайных чисел и задержкой), чтобы сфокусироваться на архитектуре очередей и взаимодействии компонентов.
+**Примечание:** Это учебный проект, в нём могут быть ошибки и упрощения.

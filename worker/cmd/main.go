@@ -86,7 +86,7 @@ func main() {
 			log.Printf("Получено сообщение: %s", msg.Body)
 			if err := itemService.ProcessTask(msg.Body); err != nil {
 				log.Printf("Ошибка декодирования Json: %v", err)
-				msg.Nack(false, true)
+				msg.Nack(false, false)
 				continue
 			}
 			msg.Ack(false)

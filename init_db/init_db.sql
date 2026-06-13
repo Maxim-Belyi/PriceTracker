@@ -1,9 +1,0 @@
-CREATE TABLE IF NOT EXISTS items (
-    id SERIAL PRIMARY KEY,
-    url TEXT NOT NULL,
-    title TEXT,
-    current_price NUMERIC(10, 2) DEFAULT 0.00,
-    status VARCHAR(50) DEFAULT 'pending',
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
