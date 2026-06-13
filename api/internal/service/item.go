@@ -22,6 +22,15 @@ func NewItemService(repo *repository.ItemRepository, ch *amqp.Channel) *ItemServ
 	}
 }
 
+func (s *ItemService) GetAllItems() ([]repository.Item, error) {
+	items, err := s.repo.GetAllItems()
+	if err != nil {
+		log.Printf("Ошибка получения данных из репозитория: %v",err)
+		return nil, err
+	}
+	return items, nil
+} 
+
 func (s *ItemService) ProcessItem(ctx context.Context, url string) (int, error) {
 	
 	type Task struct {
