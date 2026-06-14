@@ -10,12 +10,12 @@ type ItemRepository struct {
 }
 
 func NewItemRepository(db *sql.DB) *ItemRepository {
-	return &ItemRepository {
+	return &ItemRepository{
 		db: db,
 	}
 }
 
-func (r *ItemRepository) UpdateItemData( id int, title string, imageUrl string, price float64) (error) {
+func (r *ItemRepository) UpdateItemData(id int, title string, imageUrl string, price float64) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return fmt.Errorf("Ошибка старта транзакции: %v", err)
