@@ -13,22 +13,10 @@ import (
 	"pricetracker/api/internal/repository"
 	"pricetracker/api/internal/service"
 	"pricetracker/api/internal/handler"
+	"pricetracker/api/internal/middleware"
 )
 
-func enableCORS(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Access-Control-Allow-Origin", "*")
-        w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-        if r.Method == "OPTIONS" {
-            w.WriteHeader(http.StatusOK)
-            return
-        }
-
-        next.ServeHTTP(w, r)
-    })
-}
 
 func main() {
 	dsn := os.Getenv("DB_DSN")
@@ -51,6 +39,7 @@ func main() {
 	if rmqUrl == "" {
 		rmqUrl = "amqp://guest:guest@localhost:5672/"
 	}
+
 	conn, err := amqp.Dial(rmqUrl)
 	if err != nil {
 		log.Fatalf("Не удалось подключиться к RabbitMq: %v", err)
@@ -82,11 +71,14 @@ func main() {
 
 	itemRepo := repository.NewItemRepository(db)
 	itemService := service.NewItemService(itemRepo, ch)
-
 	itemHandler := handler.NewItemHandler(itemService)
-	http.HandleFunc("/items", itemHandler.GetAll)
-	http.HandleFunc("/track", itemHandler.Track)
 
+	mux := http.NewServeMux()
+	
+	mux.HandleFunc("/items", itemHandler.GetAll)
+	mux.HandleFunc("/track", itemHandler.Track)
+
+	handlerWithCORS := middleware.CORS(mux)
 	log.Println("сервер запущен на http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", enableCORS(http.DefaultServeMux)))
+	log.Fatal(http.ListenAndServe(":8080",  handlerWithCORS))
 }
