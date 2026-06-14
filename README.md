@@ -11,6 +11,7 @@
 2.  **Parser Worker:** Фоновый демон без HTTP-интерфейса. Непрерывно слушает очередь RabbitMQ, забирает ссылки на товары, "парсит" их цены (с эмуляцией задержек), обновляет информацию в PostgreSQL и отправляет подтверждение брокеру (ACK).
 
 ## 🛠️ Стек технологий
+# Backend
 <div> 
 <img src="https://img.shields.io/badge/Go-00ADD8?style=flat&logo=go&logoColor=white" alt="Go"/> 
 <img src="https://img.shields.io/badge/RabbitMQ-FF6600?style=flat&logo=rabbitmq&logoColor=white" alt="RabbitMQ"/>
@@ -18,6 +19,17 @@
 <img src="https://img.shields.io/badge/pgx-blue?style=flat&logo=go&logoColor=white" alt="pgx"/> 
 <img src="https://img.shields.io/badge/goquery-007D9C?style=flat&logo=go&logoColor=white" alt="goquery"/>
 <img src="https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker"/> 
+</div>
+
+<br>
+
+# Frontend
+<div> 
+<img src="https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB" alt="React"/> 
+<img src="https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white" alt="TypeScript"/>
+<img src="https://img.shields.io/badge/Vite-B73BFE?style=flat&logo=vite&logoColor=FFD62E" alt="Vite"/> 
+<img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"/> 
+<img src="https://img.shields.io/badge/Recharts-22B573?style=flat&logo=react&logoColor=white" alt="Recharts"/>
 </div>
 
 ## ⚙️ Как запустить локально

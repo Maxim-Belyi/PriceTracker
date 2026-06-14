@@ -1,3 +1,7 @@
 /go.mod
 /go.sum
 .env
+*.log
+frontend/dist
+frontend/.vite
+frontend/.npm
