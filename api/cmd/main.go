@@ -10,13 +10,11 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 
-	"pricetracker/api/internal/repository"
-	"pricetracker/api/internal/service"
 	"pricetracker/api/internal/handler"
 	"pricetracker/api/internal/middleware"
+	"pricetracker/api/internal/repository"
+	"pricetracker/api/internal/service"
 )
-
-
 
 func main() {
 	dsn := os.Getenv("DB_DSN")
@@ -74,11 +72,12 @@ func main() {
 	itemHandler := handler.NewItemHandler(itemService)
 
 	mux := http.NewServeMux()
-	
+
 	mux.HandleFunc("/items", itemHandler.GetAll)
 	mux.HandleFunc("/track", itemHandler.Track)
+	mux.HandleFunc("GET /history/{id}", itemHandler.GetHistory)
 
 	handlerWithCORS := middleware.CORS(mux)
 	log.Println("сервер запущен на http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080",  handlerWithCORS))
+	log.Fatal(http.ListenAndServe(":8080", handlerWithCORS))
 }
