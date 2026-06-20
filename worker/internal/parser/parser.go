@@ -1,11 +1,15 @@
 package parser
 
+import (
+	"context"
+)
+
 type ParsedItem struct {
 	Title string
 	Price float64
-	ImageUrl string
+	ImageURL string
 }
 
 type ItemParser interface {
-	Parse(url string) (ParsedItem, error)
+	Parse(ctx context.Context, url string) (ParsedItem, error)
 }

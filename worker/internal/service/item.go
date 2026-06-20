@@ -1,58 +1,49 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
-	"net/http"
+	
 	"pricetracker/worker/internal/parser"
 	"pricetracker/worker/internal/repository"
 )
 
 type ItemService struct {
-	repo *repository.ItemRepository
+	repo   *repository.ItemRepository
+	parser parser.ItemParser 
 }
 
-func NewItemService(repo *repository.ItemRepository) *ItemService {
+func NewItemService(repo *repository.ItemRepository, p parser.ItemParser) *ItemService {
 	return &ItemService{
-		repo: repo,
+		repo:   repo,
+		parser: p,
 	}
 }
 
-func (s *ItemService) ProcessTask(messageBody []byte) error {
-
+func (s *ItemService) ProcessTask(ctx context.Context, messageBody []byte) error {
 	type Task struct {
-		Id  int    `json:"id"`
-		Url string `json:"url"`
+		ID  int    `json:"id"`
+		URL string `json:"url"`
 	}
 
 	var t Task
-
 	if err := json.Unmarshal(messageBody, &t); err != nil {
 		log.Printf("Ошибка декодирования Json: %v", err)
 		return err
 	}
-	log.Printf("Начинаю парсинг для URL: %v", t.Url)
-
-		resp, err := http.Get(t.Url)
-		if err != nil{
-			log.Printf("Ошибка скачивания страницы: %v", err)
-			return err
-		}
-		log.Printf("Страница скачана! Статус: %d", resp.StatusCode)
-		defer resp.Body.Close()
-
-	p := parser.NewCitilinkParser()
 	
-	parsedItem, err := p.Parse(t.Url)
+	log.Printf("Начинаю парсинг для URL: %v", t.URL)
+
+	parsedItem, err := s.parser.Parse(ctx, t.URL)
 	if err != nil {
-		log.Printf("Ошибка парсинга: %v", err)
+		return fmt.Errorf("ошибка парсинга: %w", err)
 	}
 	
-	err = s.repo.UpdateItemData(t.Id, parsedItem.Title, parsedItem.ImageUrl, parsedItem.Price)
+	err = s.repo.UpdateItemData(t.ID, parsedItem.Title, parsedItem.ImageURL, parsedItem.Price)
 	if err != nil {
-		log.Printf("Ошибка обновления БД: %v", err)
-		return err
+		return fmt.Errorf("ошибка обновления БД: %w", err)
 	}
 	return nil
-
 }

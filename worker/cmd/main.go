@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
+	"sync"
 
+	"pricetracker/worker/internal/parser"
 	"pricetracker/worker/internal/repository"
 	"pricetracker/worker/internal/service"
 
@@ -57,14 +61,22 @@ func main() {
 		false,
 		nil,
 	)
+
+	err = ch.Qos(
+		1,
+		0,
+		false,
+	)
+
 	if err != nil {
-		log.Fatalf("Не удалось объявить очередь: %v", err)
+		log.Fatalf("Не удалось настроить QoS: %v", err)
 	}
 
 	log.Printf("Очередь объявлена! Имя: %s, Сообщений: %d", q.Name, q.Messages)
 
 	itemRepo := repository.NewItemRepository(db)
-	itemService := service.NewItemService(itemRepo)
+	citilinkParser := parser.NewCitilinkParser()
+	itemService := service.NewItemService(itemRepo, citilinkParser)
 
 	msgs, err := ch.Consume(
 		"parsing_tasks",
@@ -79,21 +91,30 @@ func main() {
 		log.Fatalf("Ошибка регистрации консумера: %v", err)
 	}
 
+	var wg sync.WaitGroup
+
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		for msg := range msgs {
+			wg.Add(1)
 			log.Printf("Получено сообщение: %s", msg.Body)
-			if err := itemService.ProcessTask(msg.Body); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+			if err := itemService.ProcessTask(ctx, msg.Body); err != nil {
 				log.Printf("Ошибка декодирования Json: %v", err)
 				msg.Nack(false, false)
-				continue
+			}else {
+				msg.Ack(false)
 			}
-			msg.Ack(false)
+			cancel()
+			wg.Done()
 		}
 	}()
 	log.Println("Worker запущен! Ожидание сообщений...")
 
 	<-sigs
 	log.Println("Получаем сигнал завершения, воркер выключается")
+	wg.Wait()
+	log.Println("Все задачи завершены")
 }

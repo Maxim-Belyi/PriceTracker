@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -15,16 +16,24 @@ func NewCitilinkParser() *CitilinkParser{
 	return &CitilinkParser{}
 }
 
-func (p *CitilinkParser) Parse(url string) (ParsedItem, error) {
+func (p *CitilinkParser) Parse(ctx context.Context, url string) (ParsedItem, error) {
 	var item ParsedItem
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return item, fmt.Errorf("Ошибка запроса: %v", err)
 	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+
+	if err != nil {
+		return item, fmt.Errorf("Ошибка запросы: %v", err)
+	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return item, fmt.Errorf("Сервис вернул статус %d", resp.StatusCode)
 	}
 
@@ -32,10 +41,9 @@ func (p *CitilinkParser) Parse(url string) (ParsedItem, error) {
 	if err != nil {
 		return item, fmt.Errorf("Ошибка парсинга Html: %v", err)
 	}
+
 	item.Title = doc.Find(`a[data-meta-name="Snippet__title"]`).AttrOr("title", "Без названия")
-
-	item.ImageUrl = doc.Find(`div[data-meta-name="Snippet__images"] [img]`).AttrOr("src", "")
-
+	item.ImageURL = doc.Find(`div[data-meta-name="Snippet__images"] [img]`).AttrOr("src", "")
 	priceStr := doc.Find(`span[data-meta-name="Snippet__price"]`).AttrOr("data-meta-price", "")
 
 	priceFloat, err := strconv.ParseFloat(priceStr, 64)
