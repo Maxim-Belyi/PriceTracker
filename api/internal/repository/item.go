@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
-    "context"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -24,7 +24,7 @@ type HistoryRepository struct {
 }
 
 type HistoryItem struct {
-	ID int `json:"id"`
+	ID    int     `json:"id"`
 	Price float64 `json:"price"`
 }
 
@@ -34,34 +34,33 @@ func NewHistoryRepository(db *sql.DB) *HistoryRepository {
 	}
 }
 
-
 func (r *ItemRepository) GetAllItems(ctx context.Context) ([]Item, error) {
-    query := `SELECT id, title, image_url, current_price, status
+	query := `SELECT id, title, image_url, current_price, status
               FROM items
               ORDER BY updated_at DESC`
-     
-    rows, err := r.db.QueryContext(ctx, query)
-    if err != nil {
-        return nil, err 
-    }
-    defer rows.Close() 
 
-    var items []Item 
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var i Item
-        err := rows.Scan(&i.ID, &i.Title, &i.ImageUrl, &i.CurrentPrice, &i.Status)
-        if err != nil {
-            return nil, err 
-        }
-        items = append(items, i)
-    }
+	var items []Item
 
-    if err = rows.Err(); err != nil {
-        return nil, err
-    }
-    
-    return items, nil
+	for rows.Next() {
+		var i Item
+		err := rows.Scan(&i.ID, &i.Title, &i.ImageUrl, &i.CurrentPrice, &i.Status)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }
 
 func NewItemRepository(db *sql.DB) *ItemRepository {
@@ -70,23 +69,23 @@ func NewItemRepository(db *sql.DB) *ItemRepository {
 	}
 }
 
-func (r *ItemRepository) Create(url string) (int, error) {
+func (r *ItemRepository) Create(ctx context.Context, url string) (int, error) {
 	var id int
 	query := (`INSERT INTO items (url) VALUES ($1) RETURNING id`)
-	if err := r.db.QueryRow(query, url).Scan(&id); err != nil {
+	if err := r.db.QueryRowContext(ctx, query, url).Scan(&id); err != nil {
 		return 0, err
 	}
 
 	return id, nil
 }
 
-func (h *HistoryRepository) GetHistory(itemID int) ([]HistoryItem, error) {
+func (h *HistoryRepository) GetHistory(ctx context.Context, itemID int) ([]HistoryItem, error) {
 	query := `SELECT id, price
 			  FROM price_history
 			  WHERE item_id = $1
 			  ORDER BY created_at DESC`
-	
-	rows, err := h.db.Query(query, itemID)
+
+	rows, err := h.db.QueryContext(ctx, query, itemID)
 	if err != nil {
 		return nil, err
 	}

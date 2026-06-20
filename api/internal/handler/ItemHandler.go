@@ -66,8 +66,8 @@ func (h *ItemHandler) Track(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := TrackResponse  {
-		ID: id,
+	res := TrackResponse{
+		ID:     id,
 		Status: "Сохранено",
 	}
 
@@ -78,12 +78,7 @@ func (h *ItemHandler) Track(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *ItemHandler) GetHistory(w http.ResponseWriter, r *http.Request){
-	if r.Method != http.MethodGet {
-		http.Error(w, "Метод не разрешён!", http.StatusMethodNotAllowed)
-		return
-	}
-
+func (h *ItemHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
 	idStr := r.PathValue("id")
 
 	id, err := strconv.Atoi(idStr)
@@ -98,7 +93,6 @@ func (h *ItemHandler) GetHistory(w http.ResponseWriter, r *http.Request){
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(history); err != nil {
-		http.Error(w, "Ошибка кодирования JSON", http.StatusInternalServerError)
-	}}
-
-	
+		log.Printf("Ошибка кодирования JSON", err)
+	}
+}

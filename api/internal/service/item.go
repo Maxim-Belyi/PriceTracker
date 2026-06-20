@@ -14,12 +14,14 @@ import (
 type ItemService struct {
 	repo *repository.ItemRepository
 	ch   *amqp.Channel
+	historyRepo *repository.HistoryRepository
 }
 
-func NewItemService(repo *repository.ItemRepository, ch *amqp.Channel) *ItemService {
+func NewItemService(repo *repository.ItemRepository, historyRepo *repository.HistoryRepository, ch *amqp.Channel) *ItemService {
 	return &ItemService{
 		repo: repo,
 		ch:   ch,
+		historyRepo: historyRepo,
 	}
 }
 
@@ -38,7 +40,7 @@ func (s *ItemService) ProcessItem(ctx context.Context, url string) (int, error) 
 		Url string `json:"url"`
 	}
 
-	id, err := s.repo.Create(url)
+	id, err := s.repo.Create(ctx, url)
 	if err != nil {
 		log.Printf("Ошибка: %v", err)
 		return 0, err
@@ -72,4 +74,12 @@ func (s *ItemService) ProcessItem(ctx context.Context, url string) (int, error) 
 	log.Println("Сообщение отправлено!")
 	return id, nil
 
+}
+
+func (s *ItemService) GetHistory(ctx context.Context, id int) ([]repository.HistoryItem, error) {
+	history, err := s.historyRepo.GetHistory(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("Ошибка получения истории: %w", err)
+	}
+	return history, nil
 }

@@ -73,27 +73,28 @@ func main() {
 	log.Printf("Очередь объявлена! Имя: %s, Сообщений: %d", q.Name, q.Messages)
 
 	itemRepo := repository.NewItemRepository(db)
-	itemService := service.NewItemService(itemRepo, ch)
+	historyRepo := repository.NewHistoryRepository(db)
+	itemService := service.NewItemService(itemRepo, historyRepo, ch)
 	itemHandler := handler.NewItemHandler(itemService)
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("GET/items", itemHandler.GetAll)
-	mux.HandleFunc("POST/track", itemHandler.Track)
+	mux.HandleFunc("GET /items", itemHandler.GetAll)
+	mux.HandleFunc("POST /track", itemHandler.Track)
 	mux.HandleFunc("GET /history/{id}", itemHandler.GetHistory)
 
 	handlerWithCORS := middleware.CORS(mux)
-	
+
 	srv := &http.Server{
-		Addr: ":8080",
+		Addr:    ":8080",
 		Handler: handlerWithCORS,
 	}
 
 	go func() {
-	log.Println("сервер запущен на http://localhost:8080")
-	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		log.Fatalf("Ошибка сервера: %v", err)
-	}
+		log.Println("сервер запущен на http://localhost:8080")
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Ошибка сервера: %v", err)
+		}
 	}()
 
 	quit := make(chan os.Signal, 1)
@@ -107,8 +108,6 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("Ошибка при выкл сервера: %v", err)
 	}
-	
-
 
 	log.Println("HTTP сервер остановлен, зыкрываем соединение с Бд и Rabbit")
 }
