@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
@@ -73,11 +78,37 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/items", itemHandler.GetAll)
-	mux.HandleFunc("/track", itemHandler.Track)
+	mux.HandleFunc("GET/items", itemHandler.GetAll)
+	mux.HandleFunc("POST/track", itemHandler.Track)
 	mux.HandleFunc("GET /history/{id}", itemHandler.GetHistory)
 
 	handlerWithCORS := middleware.CORS(mux)
+	
+	srv := &http.Server{
+		Addr: ":8080",
+		Handler: handlerWithCORS,
+	}
+
+	go func() {
 	log.Println("сервер запущен на http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", handlerWithCORS))
+	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatalf("Ошибка сервера: %v", err)
+	}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Получен сигнал на завершение, останавливаем сервер...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Ошибка при выкл сервера: %v", err)
+	}
+	
+
+
+	log.Println("HTTP сервер остановлен, зыкрываем соединение с Бд и Rabbit")
 }

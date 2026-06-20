@@ -1,17 +1,18 @@
 package handler
 
 import (
-	"log"
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
+	"pricetracker/api/internal/repository"
 	"strconv"
 )
 
 type ItemService interface {
-	GetAllItems(ctx context.Context) (any, error)
+	GetAllItems(ctx context.Context) ([]repository.Item, error)
 	ProcessItem(ctx context.Context, url string) (int, error)
-	GetHistory(ctx context.Context, id int) (any, error)
+	GetHistory(ctx context.Context, id int) ([]repository.HistoryItem, error)
 }
 
 type TrackRequest struct {
@@ -98,6 +99,6 @@ func (h *ItemHandler) GetHistory(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(history); err != nil {
 		http.Error(w, "Ошибка кодирования JSON", http.StatusInternalServerError)
-	}
+	}}
 
-	}
+	

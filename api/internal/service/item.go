@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"fmt"
 
 	"pricetracker/api/internal/repository"
 
@@ -22,11 +23,10 @@ func NewItemService(repo *repository.ItemRepository, ch *amqp.Channel) *ItemServ
 	}
 }
 
-func (s *ItemService) GetAllItems() ([]repository.Item, error) {
-	items, err := s.repo.GetAllItems()
+func (s *ItemService) GetAllItems(ctx context.Context) ([]repository.Item, error) {
+	items, err := s.repo.GetAllItems(ctx)
 	if err != nil {
-		log.Printf("Ошибка получения данных из репозитория: %v",err)
-		return nil, err
+		return nil, fmt.Errorf("Ошибка получения элементов: %w",err)
 	}
 	return items, nil
 } 

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+    "context"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -27,12 +28,19 @@ type HistoryItem struct {
 	Price float64 `json:"price"`
 }
 
-func (r *ItemRepository) GetAllItems() ([]Item, error) {
+func NewHistoryRepository(db *sql.DB) *HistoryRepository {
+	return &HistoryRepository{
+		db: db,
+	}
+}
+
+
+func (r *ItemRepository) GetAllItems(ctx context.Context) ([]Item, error) {
     query := `SELECT id, title, image_url, current_price, status
               FROM items
               ORDER BY updated_at DESC`
      
-    rows, err := r.db.Query(query)
+    rows, err := r.db.QueryContext(ctx, query)
     if err != nil {
         return nil, err 
     }
