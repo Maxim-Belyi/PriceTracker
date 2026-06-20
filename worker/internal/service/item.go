@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	
+
 	"pricetracker/worker/internal/parser"
 	"pricetracker/worker/internal/repository"
 )
 
 type ItemService struct {
 	repo   *repository.ItemRepository
-	parser parser.ItemParser 
+	parser parser.ItemParser
 }
 
 func NewItemService(repo *repository.ItemRepository, p parser.ItemParser) *ItemService {
@@ -34,16 +34,23 @@ func (s *ItemService) ProcessTask(ctx context.Context, messageBody []byte) error
 		return err
 	}
 	
-	log.Printf("Начинаю парсинг для URL: %v", t.URL)
+	log.Printf("Начинаю парсинг каталога: %v", t.URL)
 
-	parsedItem, err := s.parser.Parse(ctx, t.URL)
+	parsedItems, err := s.parser.Parse(ctx, t.URL)
 	if err != nil {
 		return fmt.Errorf("ошибка парсинга: %w", err)
 	}
+	log.Printf("спарсили %d товаров. Начинаем запись в БД...", len(parsedItems))
 	
-	err = s.repo.UpdateItemData(t.ID, parsedItem.Title, parsedItem.ImageURL, parsedItem.Price)
+	err = s.repo.SaveMultipleItems(ctx, parsedItems)
 	if err != nil {
-		return fmt.Errorf("ошибка обновления БД: %w", err)
+		return fmt.Errorf("ошибка массового сохранения: %w", err)
 	}
+
+	if err := s.repo.DeleteTask(ctx, t.ID); err != nil {
+		log.Printf("не удалось удалить задачу ID=%d: %v", t.ID, err)
+	}
+	
+	log.Printf("Каталог обработан, все товары в базе")
 	return nil
 }
