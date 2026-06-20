@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings" 
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -43,19 +43,22 @@ func (p *CitilinkParser) Parse(ctx context.Context, url string) ([]ParsedItem, e
 
 	titles := doc.Find(`a[data-meta-name="Snippet__title"]`)
 	prices := doc.Find(`span[data-meta-name="Snippet__price"]`)
-	images := doc.Find(`div[data-meta-name="Snippet__images"] [img]`)
+	images := doc.Find(`div[data-meta-name="Snippet__images"]`)
 
 	titles.Each(func(i int, s *goquery.Selection) {
 		title := s.AttrOr("title", "Без названия")
-		
-		// Достаем ссылку на сам товар
+
 		href := s.AttrOr("href", "")
 		if href != "" && strings.HasPrefix(href, "/") {
 			href = "https://www.citilink.ru" + href
 		}
 
-		priceStr := prices.Eq(i).AttrOr("data-meta-price", "0")
-		imgUrl := images.Eq(i).AttrOr("src", "")
+		imgContainer := images.Eq(i)
+		imgNode := imgContainer.Find("img").First()
+		imgUrl := imgNode.AttrOr("src", "")
+
+		priceNode := prices.Eq(i)
+		priceStr := priceNode.Find("[data-meta-price]").AttrOr("data-meta-price", "0")
 
 		priceFloat, err := strconv.ParseFloat(priceStr, 64)
 		if err != nil {
@@ -66,7 +69,7 @@ func (p *CitilinkParser) Parse(ctx context.Context, url string) ([]ParsedItem, e
 			Title:      title,
 			Price:      priceFloat,
 			ImageURL:   imgUrl,
-			ProductURL: href, 
+			ProductURL: href,
 		})
 	})
 
