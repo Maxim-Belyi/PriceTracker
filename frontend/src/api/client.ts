@@ -4,6 +4,7 @@ export interface Item {
   image_url: string;
   current_price: number;
   status: "pending" | "success" | "error";
+  source: string;
 }
 
 export interface PriceHistory {

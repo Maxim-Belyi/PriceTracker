@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"pricetracker/worker/internal/parser"
+	"strings"
 )
 
 type ItemRepository struct {
@@ -22,6 +23,19 @@ func (r *ItemRepository) DeleteTask(ctx context.Context, id int) error {
 	return err
 }
 
+func sourceFromURL(url string) string {
+	if strings.Contains(url, "citilink") {
+		return "citilink"
+	}
+	if strings.Contains(url, "wildberries") {
+		return "wildberries"
+	}
+	if strings.Contains(url, "ozon") {
+		return "ozon"
+	}
+	return "unknown"
+}
+
 func (r *ItemRepository) SaveMultipleItems(ctx context.Context, items []parser.ParsedItem) error {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -30,8 +44,8 @@ func (r *ItemRepository) SaveMultipleItems(ctx context.Context, items []parser.P
 	defer tx.Rollback()
 
 	insertItemQuery := `
-	INSERT INTO items (url, title, image_url, current_price, status, updated_at)
-	VALUES ($1, $2, $3, $4, 'processed', CURRENT_TIMESTAMP)
+	INSERT INTO items (url, title, image_url, current_price, status, source, updated_at)
+	VALUES ($1, $2, $3, $4, 'processed', $5, CURRENT_TIMESTAMP)
 	RETURNING id
 	`
 	insertHistoryQuery := `
@@ -41,7 +55,7 @@ func (r *ItemRepository) SaveMultipleItems(ctx context.Context, items []parser.P
 
 	for _, item := range items {
 		var newID int
-		err := tx.QueryRowContext(ctx, insertItemQuery, item.ProductURL, item.Title, item.ImageURL, item.Price).Scan(&newID)
+		err := tx.QueryRowContext(ctx, insertItemQuery, item.ProductURL, item.Title, item.ImageURL, item.Price, sourceFromURL(item.ProductURL)).Scan(&newID)
 		if err != nil {
 			return fmt.Errorf("ошибка вставки товара '%s': %v", item.Title, err)
 		}

@@ -6,6 +6,7 @@ CREATE TABLE
         image_url TEXT,
         current_price NUMERIC(10, 2) DEFAULT 0.00,
         status VARCHAR(50) DEFAULT 'pending',
+        source VARCHAR(50) DEFAULT 'unknown',
         created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );

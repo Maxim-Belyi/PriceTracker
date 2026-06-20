@@ -32,16 +32,19 @@ function App() {
     loadItems();
   };
 
+  const filteredItems = activeTab === "all"
+    ? items
+    : items.filter((item) => item.source === activeTab);
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
       <TopBar onTrackSuccess={handleTrackSuccess} />
-      
+
       <main className="p-8 flex-1">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-            {activeTab === "all" ? "Все товары" : 
-             activeTab === "citilink" ? "Ситилинк" : 
-             activeTab === "ozon" ? "Ozon" : "Wildberries"}
+            {activeTab === "all" ? "Все товары" :
+              activeTab === "citilink" ? "Ситилинк" :
+                activeTab === "ozon" ? "Ozon" : "Wildberries"}
           </h1>
           <p className="text-slate-500 mt-1">Отслеживайте изменение цен на выбранные товары</p>
         </div>
@@ -50,13 +53,14 @@ function App() {
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
           </div>
-        ) : items.length > 0 ? (
+        ) : filteredItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-            {items.map((item) => (
-              <ItemCard 
-                key={item.id} 
-                item={item} 
-                onClick={(item) => setSelectedItem(item)} 
+
+            {filteredItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onClick={(item) => setSelectedItem(item)}
               />
             ))}
           </div>
@@ -69,9 +73,9 @@ function App() {
       </main>
 
       {selectedItem && (
-        <PriceHistoryModal 
-          item={selectedItem} 
-          onClose={() => setSelectedItem(null)} 
+        <PriceHistoryModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
         />
       )}
     </Layout>

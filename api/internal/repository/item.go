@@ -17,6 +17,7 @@ type Item struct {
 	ImageUrl     *string `json:"image_url"`
 	CurrentPrice float64 `json:"current_price"`
 	Status       string  `json:"status"`
+	Source       string  `json:"source"`
 }
 
 type HistoryRepository struct {
@@ -35,7 +36,7 @@ func NewHistoryRepository(db *sql.DB) *HistoryRepository {
 }
 
 func (r *ItemRepository) GetAllItems(ctx context.Context) ([]Item, error) {
-	query := `SELECT id, title, image_url, current_price, status
+	query := `SELECT id, title, image_url, current_price, status, source
               FROM items
               ORDER BY updated_at DESC`
 
@@ -45,11 +46,11 @@ func (r *ItemRepository) GetAllItems(ctx context.Context) ([]Item, error) {
 	}
 	defer rows.Close()
 
-	var items []Item
+	items := make([]Item, 0)
 
 	for rows.Next() {
 		var i Item
-		err := rows.Scan(&i.ID, &i.Title, &i.ImageUrl, &i.CurrentPrice, &i.Status)
+		err := rows.Scan(&i.ID, &i.Title, &i.ImageUrl, &i.CurrentPrice, &i.Status, &i.Source)
 		if err != nil {
 			return nil, err
 		}
