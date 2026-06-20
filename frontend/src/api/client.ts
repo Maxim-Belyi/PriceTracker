@@ -11,7 +11,7 @@ export interface PriceHistory {
   date: string;
 }
 
-const API_BASE_URL = 'http://localhost:8080';
+const API_BASE_URL = 'http://localhost:9090';
 
 export async function fetchItems(): Promise<Item[]> {
   try {
@@ -20,12 +20,7 @@ export async function fetchItems(): Promise<Item[]> {
     return await res.json();
   } catch (error) {
     console.warn("API unreachable, using dummy data for items", error);
-    return [
-      { id: 1, title: "Apple iPhone 15 Pro Max 256GB, Natural Titanium", image_url: "https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&q=80&w=200&h=200", current_price: 139990, status: "success" },
-      { id: 2, title: "Sony PlayStation 5 Slim (Disk Edition)", image_url: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&q=80&w=200&h=200", current_price: 54990, status: "success" },
-      { id: 3, title: "Dyson V15 Detect Absolute", image_url: "https://images.unsplash.com/photo-1558317374-067fb5f30001?auto=format&fit=crop&q=80&w=200&h=200", current_price: 69990, status: "pending" },
-      { id: 4, title: "Samsung Galaxy S24 Ultra 512GB", image_url: "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?auto=format&fit=crop&q=80&w=200&h=200", current_price: 119990, status: "error" },
-    ];
+    throw error;
   }
 }
 
@@ -40,21 +35,19 @@ export async function trackUrl(url: string): Promise<{ id: number, status: strin
     return await res.json();
   } catch (error) {
     console.warn("API unreachable, using dummy tracking response", error);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    return { id: Math.floor(Math.random() * 1000) + 10, status: "Сохранено" };
+    throw error;
   }
 }
 
 export async function fetchItemHistory(id: number): Promise<PriceHistory[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/items/${id}/history`);
+    const res = await fetch(`${API_BASE_URL}/history/${id}`);
     if (!res.ok) throw new Error("Failed to fetch history");
     return await res.json();
   } catch (error) {
-    console.warn(`API unreachable, using dummy history for item ${id}`, error);
+    console.warn("failed to fetch history", error);
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Generate some random realistic looking dummy data based on ID
+
     const basePrice = 100000 + (id * 10000);
     return [
       { price: basePrice + 15000, date: "2026-05-01" },

@@ -1,6 +1,6 @@
 import { Item } from "../api/client";
 import { cn } from "../lib/utils";
-import { AlertCircle, CheckCircle2, Clock } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, CloudOff } from "lucide-react";
 
 interface ItemCardProps {
   item: Item;
@@ -20,6 +20,7 @@ export function ItemCard({ item, onClick }: ItemCardProps) {
     pending: { icon: Clock, className: "text-amber-500 bg-amber-50", label: "В ожидании" },
     success: { icon: CheckCircle2, className: "text-emerald-500 bg-emerald-50", label: "Обновлено" },
     error: { icon: AlertCircle, className: "text-red-500 bg-red-50", label: "Ошибка" },
+    processed: { icon: CloudOff, className: "text-blue-500 bg-blue-50", label: "В процессе" },
   };
 
   const StatusIcon = statusConfig[item.status].icon;

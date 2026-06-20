@@ -29,7 +29,6 @@ function App() {
   }, []);
 
   const handleTrackSuccess = () => {
-    // Refresh items to show the newly tracked one
     loadItems();
   };
 
