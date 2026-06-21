@@ -1,9 +1,9 @@
 export interface Item {
   id: number;
-  title: string;
-  image_url: string;
+  title: string | null;
+  image_url: string | null;
   current_price: number;
-  status: "pending" | "success" | "error";
+  status: "pending" | "success" | "error" | "processed";
   source: string;
 }
 
@@ -13,6 +13,11 @@ export interface PriceHistory {
 }
 
 const API_BASE_URL = 'http://localhost:9090';
+
+export function proxyImageUrl(imageUrl: string | null | undefined): string | undefined {
+  if (!imageUrl) return undefined;
+  return `${API_BASE_URL}/image-proxy?url=${encodeURIComponent(imageUrl)}`;
+}
 
 export async function fetchItems(): Promise<Item[]> {
   try {

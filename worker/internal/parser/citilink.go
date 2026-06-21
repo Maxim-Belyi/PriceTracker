@@ -55,7 +55,7 @@ func (p *CitilinkParser) Parse(ctx context.Context, url string) ([]ParsedItem, e
 
 		imgContainer := images.Eq(i)
 		imgNode := imgContainer.Find("img").First()
-		imgUrl := imgNode.AttrOr("src", "")
+		imgUrl := imgNode.AttrOr("data-src", "")
 
 		priceNode := prices.Eq(i)
 		priceStr := priceNode.Find("[data-meta-price]").AttrOr("data-meta-price", "0")

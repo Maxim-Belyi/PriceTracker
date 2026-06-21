@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Item, PriceHistory, fetchItemHistory } from "../api/client";
+import { Item, PriceHistory, fetchItemHistory, proxyImageUrl } from "../api/client";
 import { X, Loader2, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { cn } from "../lib/utils";
@@ -71,9 +71,9 @@ export function PriceHistoryModal({ item, onClose }: PriceHistoryModalProps) {
         <div className="p-6 flex flex-col flex-1 overflow-y-auto">
           {/* Header Info */}
           <div className="flex gap-4 mb-8">
-            <img src={item.image_url} alt={item.title} className="w-20 h-20 object-cover rounded-xl border border-slate-100 shadow-sm" />
+            <img src={proxyImageUrl(item.image_url)} alt={item.title ?? undefined} className="w-20 h-20 object-contain rounded-xl border border-slate-100 shadow-sm" />
             <div className="flex flex-col justify-center">
-              <h3 className="font-medium text-slate-700 leading-snug mb-1">{item.title}</h3>
+              <h3 className="font-medium text-slate-700 leading-snug mb-1">{item.title ?? "Без названия"}</h3>
               <div className="flex items-baseline gap-3">
                 <span className="text-2xl font-bold text-slate-900 tracking-tight">{formatPrice(item.current_price)}</span>
                 

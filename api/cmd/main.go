@@ -82,6 +82,7 @@ func main() {
 	mux.HandleFunc("GET /items", itemHandler.GetAll)
 	mux.HandleFunc("POST /track", itemHandler.Track)
 	mux.HandleFunc("GET /history/{id}", itemHandler.GetHistory)
+	mux.HandleFunc("GET /image-proxy", handler.ProxyImage)
 
 	handlerWithCORS := middleware.CORS(mux)
 
