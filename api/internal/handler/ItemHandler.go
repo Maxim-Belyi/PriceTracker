@@ -75,7 +75,7 @@ func (h *ItemHandler) Track(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string {
-			"error": "Неподдерживаемый источник",
+			"error": "Неподдерживаемый источник, доступны: " + strings.Join(supportedDomains, ","),
 		})
 		return
 	}

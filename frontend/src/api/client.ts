@@ -26,19 +26,16 @@ export async function fetchItems(): Promise<Item[]> {
 }
 
 export async function trackUrl(url: string): Promise<{ id: number, status: string }> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/track`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
-    if (!res.ok) throw new Error("Failed to track URL");
-    const err = await res.json();
-    throw new Error(err.error || "Ошибка добавления ссылки")
-  } catch (error) {
-    console.warn("API unreachable, using dummy tracking response", error);
-    throw error;
+  const res = await fetch(`${API_BASE_URL}/track`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Ошибка при добавлении ссылки");
   }
+  return await res.json();
 }
 
 export async function fetchItemHistory(id: number): Promise<PriceHistory[]> {

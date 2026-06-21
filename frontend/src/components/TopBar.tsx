@@ -25,7 +25,8 @@ export function TopBar({ onTrackSuccess }: TopBarProps) {
       onTrackSuccess();
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {
-      setMessage({ text: "Ошибка при добавлении ссылки. Сервер недоступен?", type: "error" });
+      const text = err instanceof Error ? err.message : "Ошибка при добавлении ссылки";
+      setMessage({ text, type: "error" });
       setTimeout(() => setMessage(null), 3000);
     } finally {
       setIsLoading(false);
