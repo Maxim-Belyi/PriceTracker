@@ -33,7 +33,8 @@ export async function trackUrl(url: string): Promise<{ id: number, status: strin
       body: JSON.stringify({ url })
     });
     if (!res.ok) throw new Error("Failed to track URL");
-    return await res.json();
+    const err = await res.json();
+    throw new Error(err.error || "Ошибка добавления ссылки")
   } catch (error) {
     console.warn("API unreachable, using dummy tracking response", error);
     throw error;

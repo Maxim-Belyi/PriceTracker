@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"pricetracker/api/internal/repository"
 	"strconv"
+	"strings"
 )
 
 type ItemService interface {
@@ -59,6 +60,25 @@ func (h *ItemHandler) Track(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	supportedDomains := []string{"citikink.ru", "ozon.ru", "wildberries.ru"}
+	isSupported := false
+
+	for _, domain := range supportedDomains{
+		if strings.Contains(req.URL, domain) {
+			isSupported = true
+			break
+		}
+	}
+
+	if !isSupported {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string {
+			"error": "Неподдерживаемый источник",
+		})
+		return
+	}
 
 	id, err := h.svc.ProcessItem(r.Context(), req.URL)
 	if err != nil {
