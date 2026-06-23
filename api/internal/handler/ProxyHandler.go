@@ -8,12 +8,19 @@ import (
 	"strings"
 )
 
-var allowedHosts = []string{
-	"cdn.citilink.ru",
-	"static.citilink.ru",
+type ImageProxyHandler struct {
+	client       *http.Client
+	allowedHosts []string
 }
 
-func ProxyImage(w http.ResponseWriter, r *http.Request) {
+func NewImageProxyHandler() *ImageProxyHandler {
+	return &ImageProxyHandler{
+		client:       http.DefaultClient,
+		allowedHosts: []string{"cdn.citilink.ru", "static.citilink.ru"},
+	}
+}
+
+func (h *ImageProxyHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	rawURL := r.URL.Query().Get("url")
 	if rawURL == "" {
 		http.Error(w, "параметр url обязателен", http.StatusBadRequest)
@@ -26,7 +33,7 @@ func ProxyImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !isAllowedHost(parsed.Host) {
+	if !h.isAllowedHost(parsed.Host) {
 		http.Error(w, "хост не разрешён", http.StatusForbidden)
 		return
 	}
@@ -41,7 +48,7 @@ func ProxyImage(w http.ResponseWriter, r *http.Request) {
 	req.Header.Set("Referer", "https://www.citilink.ru/")
 	req.Header.Set("Accept", "image/webp,image/avif,image/*,*/*;q=0.8")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := h.client.Do(req)
 	if err != nil {
 		log.Printf("image proxy: ошибка запроса к %s: %v", rawURL, err)
 		http.Error(w, "не удалось загрузить изображение", http.StatusBadGateway)
@@ -58,8 +65,8 @@ func ProxyImage(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, resp.Body)
 }
 
-func isAllowedHost(host string) bool {
-	for _, allowed := range allowedHosts {
+func (h *ImageProxyHandler) isAllowedHost(host string) bool {
+	for _, allowed := range h.allowedHosts {
 		if strings.EqualFold(host, allowed) {
 			return true
 		}

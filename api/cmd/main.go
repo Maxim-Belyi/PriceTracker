@@ -76,13 +76,14 @@ func main() {
 	historyRepo := repository.NewHistoryRepository(db)
 	itemService := service.NewItemService(itemRepo, historyRepo, ch)
 	itemHandler := handler.NewItemHandler(itemService)
+	proxyHandler := handler.NewImageProxyHandler()
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /items", itemHandler.GetAll)
 	mux.HandleFunc("POST /track", itemHandler.Track)
 	mux.HandleFunc("GET /history/{id}", itemHandler.GetHistory)
-	mux.HandleFunc("GET /image-proxy", handler.ProxyImage)
+	mux.HandleFunc("GET /image-proxy", proxyHandler.Handle)
 
 	handlerWithCORS := middleware.CORS(mux)
 

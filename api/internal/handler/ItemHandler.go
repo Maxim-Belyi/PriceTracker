@@ -61,7 +61,7 @@ func (h *ItemHandler) Track(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	supportedDomains := []string{"citikink.ru", "ozon.ru", "wildberries.ru"}
+	supportedDomains := []string{"citilink.ru", "ozon.ru", "wildberries.ru"}
 	isSupported := false
 
 	for _, domain := range supportedDomains{
@@ -113,6 +113,6 @@ func (h *ItemHandler) GetHistory(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(history); err != nil {
-		log.Printf("Ошибка кодирования JSON", err)
+		log.Printf("Ошибка кодирования JSON: %v", err)
 	}
 }
